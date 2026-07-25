@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MelodyAI - AI Music Generator Dashboard</title>
+    <meta name="description" content="Generate original classical and jazz music compositions powered by Deep LSTM Neural Networks.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Navigation -->
+        <header class="navbar">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>Melody<span>AI</span></h1>
+                    <span class="version-badge">Deep LSTM v2.0</span>
+                </div>
+            </div>
+            <div class="nav-metrics">
+                <div class="metric-chip">
+                    <i class="fa-solid fa-microchip"></i>
+                    <span>Model: Deep Stacked LSTM</span>
+                </div>
+                <div class="metric-chip">
+                    <i class="fa-solid fa-music"></i>
+                    <span>Vocab: 23 Pitch Tokens</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Column: Music Generation Controls -->
+            <section class="card glass-card control-panel">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-sliders"></i> Composition Parameters</h2>
+                    <p>Customize parameters to steer the neural network generation engine.</p>
+                </div>
+
+                <form id="generatorForm" onsubmit="return false;">
+                    <!-- Genre Selector -->
+                    <div class="form-group">
+                        <label for="genreSelect">
+                            <i class="fa-solid fa-compact-disc"></i> Musical Genre
+                        </label>
+                        <select id="genreSelect" class="custom-select">
+                            <option value="classical" selected>🎼 Classical Piano (Bach & Beethoven)</option>
+                            <option value="jazz">🎷 Jazz Quartet (Miles Davis & Bill Evans)</option>
+                            <option value="ambient">🎹 Ambient Piano Solos</option>
+                        </select>
+                    </div>
+
+                    <!-- Sequence Length Selector -->
+                    <div class="form-group">
+                        <label for="lengthSelect">
+                            <i class="fa-solid fa-clock"></i> Composition Length
+                        </label>
+                        <select id="lengthSelect" class="custom-select">
+                            <option value="50">50 Notes (~15 seconds)</option>
+                            <option value="100">100 Notes (~30 seconds)</option>
+                            <option value="150" selected>150 Notes (~45 seconds)</option>
+                            <option value="250">250 Notes (~75 seconds)</option>
+                            <option value="500">500 Full Composition (~2.5 mins)</option>
+                        </select>
+                    </div>
+
+                    <!-- Temperature Slider -->
+                    <div class="form-group">
+                        <div class="slider-label-row">
+                            <label for="tempSlider">
+                                <i class="fa-solid fa-fire-flame-curved"></i> Creativity Temperature (&tau;)
+                            </label>
+                            <span id="tempValueDisplay" class="badge-value">0.90</span>
+                        </div>
+                        <input type="range" id="tempSlider" class="custom-slider" min="0.1" max="1.5" step="0.05" value="0.9">
+                        <div class="slider-ticks">
+                            <span>0.1 (Strict)</span>
+                            <span>0.9 (Balanced)</span>
+                            <span>1.5 (Wild)</span>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button type="button" id="generateBtn" class="btn btn-primary btn-generate">
+                        <span class="btn-text">
+                            <i class="fa-solid fa-sparkles"></i> Generate AI Music
+                        </span>
+                        <div class="spinner hidden" id="btnSpinner"></div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Column: Interactive Player & Audio Visualizer -->
+            <section class="card glass-card player-panel">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-waveform-lines"></i> Audio Synthesis & Player</h2>
+                    <span class="status-indicator" id="statusIndicator">
+                        <span class="status-dot green"></span> Ready
+                    </span>
+                </div>
+
+                <!-- Loading Animation Container -->
+                <div class="loading-overlay hidden" id="loadingOverlay">
+                    <div class="pulsing-visualizer">
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-4"></div>
+                        <div class="bar bar-5"></div>
+                    </div>
+                    <p class="loading-text" id="loadingText">LSTM Model is composing sequence...</p>
+                </div>
+
+                <!-- Active Track Details -->
+                <div class="track-info">
+                    <div class="album-art glow-effect">
+                        <i class="fa-solid fa-music-note-slash" id="albumArtIcon"></i>
+                    </div>
+                    <div class="track-meta">
+                        <h3 id="trackTitle">AI Composition #1092</h3>
+                        <div class="track-tags">
+                            <span class="tag" id="tagGenre">Classical</span>
+                            <span class="tag" id="tagTemp">Temp: 0.90</span>
+                            <span class="tag" id="tagNotes">150 Notes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waveform Canvas Visualizer -->
+                <div class="visualizer-container">
+                    <canvas id="waveformCanvas"></canvas>
+                </div>
+
+                <!-- Custom Audio Player Controls -->
+                <div class="player-controls">
+                    <audio id="audioPlayer" src="../output/ai_composition_temp_0.9.wav" preload="auto"></audio>
+                    
+                    <div class="progress-bar-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+
+                    <div class="time-display">
+                        <span id="currentTime">00:00</span>
+                        <span id="durationTime">00:45</span>
+                    </div>
+
+                    <div class="control-buttons">
+                        <button class="icon-btn" id="rewindBtn" title="Rewind 5s">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button class="icon-btn play-btn" id="playPauseBtn" title="Play/Pause">
+                            <i class="fa-solid fa-play" id="playIcon"></i>
+                        </button>
+                        <button class="icon-btn" id="forwardBtn" title="Forward 5s">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Download Buttons -->
+                <div class="download-actions">
+                    <a id="downloadMidiBtn" href="../output/ai_composition_temp_0.9.mid" download class="btn btn-secondary">
+                        <i class="fa-solid fa-file-audio"></i> Download MIDI (.mid)
+                    </a>
+                    <a id="downloadWavBtn" href="../output/ai_composition_temp_0.9.wav" download class="btn btn-accent">
+                        <i class="fa-solid fa-download"></i> Download Audio (.wav)
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notification Container -->
+        <div id="toastContainer" class="toast-container"></div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>AI Music Generation Project &copy; 2026 | Built with TensorFlow/Keras & music21</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
